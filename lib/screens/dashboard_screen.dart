@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart'
+    hide Transaction;
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:intl/intl.dart';
+
 import '../models/transaction.dart';
 import '../widgets/dashboard/balance_card.dart';
 import '../widgets/dashboard/custom_drawer.dart';
+import '../widgets/dashboard/filter_selection.dart';
 import '../widgets/dashboard/investments_section.dart';
 import '../widgets/dashboard/my_cards_section.dart';
 import '../widgets/dashboard/new_transaction_form.dart';
@@ -22,33 +25,143 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey =
       GlobalKey<ScaffoldState>();
+  final ScrollController _scrollController = ScrollController();
   List<Transaction> _transactions = [];
   double _balance = initialBaseBalance;
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  DocumentSnapshot? _lastDocument;
   DashboardPage _currentPage = DashboardPage.inicio;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  String? _selectedCategoryFilter;
+  DateTime? _selectedDateFilter;
+  final TextEditingController _dateController =
+      TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent) {
+        _loadMoreData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
+      _hasMore = true;
+      _transactions.clear();
+      _lastDocument = null;
     });
-    final snapshot = await _firestore
+
+    Query query = _firestore
         .collection('transactions')
-        .get();
+        .orderBy('id', descending: true);
+
+    if (_selectedCategoryFilter != null) {
+      query = query.where('type', isEqualTo: _selectedCategoryFilter);
+    }
+
+    if (_selectedDateFilter != null) {
+      final formattedDate = DateFormat(
+        'dd/MM/yyyy',
+      ).format(_selectedDateFilter!);
+      query = query.where('date', isEqualTo: formattedDate);
+    }
+
+    final snapshot = await query.limit(10).get();
+    if (snapshot.docs.isNotEmpty) {
+      _lastDocument = snapshot.docs.last;
+    }
+
     final transactions = snapshot.docs
-        .map((doc) => Transaction.fromJson(doc.data()))
+        .map(
+          (doc) => Transaction.fromJson(
+            doc.data() as Map<String, dynamic>,
+          ),
+        )
         .toList();
+
     setState(() {
       _transactions = transactions;
       _calculateTotalBalance(transactions);
       _isLoading = false;
+      if (transactions.length < 10) {
+        _hasMore = false;
+      }
     });
+  }
+
+  Future<void> _loadMoreData() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    Query query = _firestore
+        .collection('transactions')
+        .orderBy('id', descending: true);
+
+    if (_selectedCategoryFilter != null) {
+      query = query.where('type', isEqualTo: _selectedCategoryFilter);
+    }
+
+    if (_selectedDateFilter != null) {
+      final formattedDate = DateFormat(
+        'dd/MM/yyyy',
+      ).format(_selectedDateFilter!);
+      query = query.where('date', isEqualTo: formattedDate);
+    }
+
+    if (_lastDocument != null) {
+      query = query.startAfterDocument(_lastDocument!);
+    }
+
+    final snapshot = await query.limit(10).get();
+    if (snapshot.docs.isNotEmpty) {
+      _lastDocument = snapshot.docs.last;
+    }
+
+    final newTransactions = snapshot.docs
+        .map(
+          (doc) => Transaction.fromJson(
+            doc.data() as Map<String, dynamic>,
+          ),
+        )
+        .toList();
+
+    setState(() {
+      _transactions.addAll(newTransactions);
+      _calculateTotalBalance(_transactions);
+      _isLoadingMore = false;
+      if (newTransactions.length < 10) {
+        _hasMore = false;
+      }
+    });
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _selectedCategoryFilter = null;
+      _selectedDateFilter = null;
+      _dateController.clear();
+    });
+    _loadData();
   }
 
   void _calculateTotalBalance(List<Transaction> currentTransactions) {
@@ -110,27 +223,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _currentPage = page;
     });
-    Navigator.of(context).pop(); // Fecha o drawer após a seleção
+    Navigator.of(context).pop();
   }
 
   Widget _buildCurrentPage() {
-    switch (_currentPage) {
-      case DashboardPage.inicio:
-        return Column(
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      child: switch (_currentPage) {
+        DashboardPage.inicio => Column(
+          key: const ValueKey('InicioPage'),
           children: [
             const MyCardsSection(),
             const SizedBox(height: 24),
-            StatementCard(
-              transactions: _transactions,
-              onDelete: _deleteTransaction,
-              onEdit: _editTransaction,
+            FilterSection(
+              selectedCategory: _selectedCategoryFilter,
+              dateController: _dateController,
+              onCategoryChanged: (category) {
+                setState(() {
+                  _selectedCategoryFilter = category;
+                });
+                _loadData();
+              },
+              onDateChanged: (date) {
+                if (date != null) {
+                  setState(() {
+                    _selectedDateFilter = date;
+                    _dateController.text = DateFormat(
+                      'dd/MM/yyyy',
+                    ).format(date);
+                  });
+                  _loadData();
+                }
+              },
+              onFilterCleared: _clearFilters,
             ),
-          ],
-        );
-      case DashboardPage.transferencias:
-        return Column(
-          children: [
-            NewTransactionForm(onAddTransaction: _addTransaction),
             const SizedBox(height: 24),
             StatementCard(
               transactions: _transactions,
@@ -138,14 +264,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onEdit: _editTransaction,
             ),
           ],
-        );
-      case DashboardPage.investimentos:
-        return const InvestmentsSection();
-      case DashboardPage.servicos:
-        return const ServicesSection();
-      default:
-        return const MyCardsSection();
-    }
+        ),
+        DashboardPage.transferencias => Column(
+          key: const ValueKey('TransferenciasPage'),
+          children: [
+            NewTransactionForm(onAddTransaction: _addTransaction),
+            const SizedBox(height: 24),
+            FilterSection(
+              selectedCategory: _selectedCategoryFilter,
+              dateController: _dateController,
+              onCategoryChanged: (category) {
+                setState(() {
+                  _selectedCategoryFilter = category;
+                });
+                _loadData();
+              },
+              onDateChanged: (date) {
+                if (date != null) {
+                  setState(() {
+                    _selectedDateFilter = date;
+                    _dateController.text = DateFormat(
+                      'dd/MM/yyyy',
+                    ).format(date);
+                  });
+                  _loadData();
+                }
+              },
+              onFilterCleared: _clearFilters,
+            ),
+            const SizedBox(height: 24),
+            StatementCard(
+              transactions: _transactions,
+              onDelete: _deleteTransaction,
+              onEdit: _editTransaction,
+            ),
+          ],
+        ),
+        DashboardPage.investimentos => const InvestmentsSection(
+          key: ValueKey('InvestimentosPage'),
+        ),
+        DashboardPage.servicos => const ServicesSection(
+          key: ValueKey('ServicosPage'),
+        ),
+      },
+    );
   }
 
   @override
@@ -165,9 +327,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
-            onPressed: () {
-              // Ação do perfil
-            },
+            onPressed: () {},
           ),
         ],
         elevation: 0,
@@ -175,6 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -182,6 +343,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   BalanceCard(balance: _balance),
                   const SizedBox(height: 24),
                   _buildCurrentPage(),
+                  if (_isLoadingMore)
+                    const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
                 ],
               ),
             ),
