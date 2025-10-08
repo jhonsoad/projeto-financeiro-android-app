@@ -8,7 +8,6 @@ import '../common/custom_dropdown.dart';
 import '../common/custom_input.dart';
 
 class NewTransactionForm extends StatefulWidget {
-  // Callback para notificar a tela principal sobre a nova transação
   final Function(String type, double amount, String? proof) onAddTransaction;
 
   const NewTransactionForm({
@@ -68,21 +67,18 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
         proofUrl = await _uploadImage(_image!);
       }
 
-      // Converte para negativo se for transferência
       final finalAmount = _selectedTransactionType == 'Transferência'
           ? -amount
           : amount;
 
       widget.onAddTransaction(_selectedTransactionType!, finalAmount, proofUrl);
 
-      // Limpa o formulário
       _formKey.currentState?.reset();
       _valueController.clear();
       setState(() {
         _selectedTransactionType = null;
         _image = null;
       });
-      // Remove o foco para fechar o teclado
       FocusScope.of(context).unfocus();
     }
   }
