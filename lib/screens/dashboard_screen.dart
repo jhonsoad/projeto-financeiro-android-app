@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
+import 'package:cloud_firestore/cloud_firestore.dart'
+    hide Transaction;
 import 'package:intl/intl.dart';
 import '../models/transaction.dart';
 import '../widgets/dashboard/balance_card.dart';
@@ -114,9 +115,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildCurrentPage() {
-    switch (_currentPage) {
-      case DashboardPage.inicio:
-        return Column(
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 1000),
+      child: switch (_currentPage) {
+        DashboardPage.inicio => Column(
+          key: const ValueKey(
+            'InicioPage',
+          ),
           children: [
             const MyCardsSection(),
             const SizedBox(height: 24),
@@ -126,9 +131,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onEdit: _editTransaction,
             ),
           ],
-        );
-      case DashboardPage.transferencias:
-        return Column(
+        ),
+        DashboardPage.transferencias => Column(
+          key: const ValueKey(
+            'TransferenciasPage',
+          ),
           children: [
             NewTransactionForm(onAddTransaction: _addTransaction),
             const SizedBox(height: 24),
@@ -138,14 +145,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onEdit: _editTransaction,
             ),
           ],
-        );
-      case DashboardPage.investimentos:
-        return const InvestmentsSection();
-      case DashboardPage.servicos:
-        return const ServicesSection();
-      default:
-        return const MyCardsSection();
-    }
+        ),
+        DashboardPage.investimentos => const InvestmentsSection(
+          key: ValueKey(
+            'InvestimentosPage',
+          ), 
+        ),
+        DashboardPage.servicos => const ServicesSection(
+          key: ValueKey('ServicosPage'), // Adiciona uma chave única
+        ),
+      },
+    );
   }
 
   @override
