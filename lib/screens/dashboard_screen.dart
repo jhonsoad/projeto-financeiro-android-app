@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart'
     hide Transaction;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -68,8 +69,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _lastDocument = null;
     });
 
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     Query query = _firestore
         .collection('transactions')
+        .where('userId', isEqualTo: user.uid)
         .orderBy('id', descending: true);
 
     if (_selectedCategoryFilter != null) {
@@ -113,8 +118,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _isLoadingMore = true;
     });
 
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     Query query = _firestore
         .collection('transactions')
+        .where('userId', isEqualTo: user.uid)
         .orderBy('id', descending: true);
 
     if (_selectedCategoryFilter != null) {
@@ -175,12 +184,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _addTransaction(String type, double amount, String? proof) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final newTransaction = Transaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       type: type,
       amount: amount,
       date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
       proof: proof,
+      userId: user.uid,
     );
 
     _firestore

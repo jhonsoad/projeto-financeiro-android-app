@@ -4,6 +4,7 @@ class Transaction {
   final double amount;
   final String date;
   final String? proof;
+  final String? userId;
 
   Transaction({
     required this.id,
@@ -11,6 +12,7 @@ class Transaction {
     required this.amount,
     required this.date,
     this.proof,
+    this.userId,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class Transaction {
       amount: (json['amount'] as num).toDouble(),
       date: json['date'],
       proof: json['proof'],
+      userId: json['userId'],
     );
   }
 
@@ -30,6 +33,7 @@ class Transaction {
       'amount': amount,
       'date': date,
       'proof': proof,
+      'userId': userId,
     };
   }
 }
