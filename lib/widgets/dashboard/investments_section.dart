@@ -83,35 +83,39 @@ class InvestmentsSection extends StatelessWidget {
   }
 
   Widget _buildStatsCard(BuildContext context) {
-    final Map<String, double> spendingByCategory = {};
+    final Map<String, double> amountByCategory = {};
+    double totalAmount = 0;
+
     for (var transaction in transactions) {
-      if (transaction.amount < 0) {
-        spendingByCategory.update(
-          transaction.type,
-          (value) => value + transaction.amount.abs(),
-          ifAbsent: () => transaction.amount.abs(),
-        );
-      }
+      amountByCategory.update(
+        transaction.type,
+        (value) => value + transaction.amount.abs(),
+        ifAbsent: () => transaction.amount.abs(),
+      );
+      totalAmount += transaction.amount.abs();
     }
 
-    final List<PieChartSectionData>
-    pieChartSections = spendingByCategory.entries.map((entry) {
-      final isTouched = false;
-      final fontSize = isTouched ? 25.0 : 16.0;
-      final radius = isTouched ? 60.0 : 50.0;
-      return PieChartSectionData(
-        color: _getColorForCategory(entry.key),
-        value: entry.value,
-        title:
-            '${(entry.value / spendingByCategory.values.reduce((a, b) => a + b) * 100).toStringAsFixed(0)}%',
-        radius: radius,
-        titleStyle: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-          color: const Color(0xffffffff),
-        ),
-      );
-    }).toList();
+    final List<PieChartSectionData> pieChartSections =
+        amountByCategory.entries.map((entry) {
+          final isTouched = false;
+          final fontSize = isTouched ? 25.0 : 16.0;
+          final radius = isTouched ? 60.0 : 50.0;
+          final percentage = totalAmount > 0
+              ? (entry.value / totalAmount * 100)
+              : 0;
+
+          return PieChartSectionData(
+            color: _getColorForCategory(entry.key),
+            value: entry.value,
+            title: '${percentage.toStringAsFixed(0)}%',
+            radius: radius,
+            titleStyle: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xffffffff),
+            ),
+          );
+        }).toList();
 
     return Card(
       color: const Color(0xFF2C5B6C),
@@ -120,7 +124,7 @@ class InvestmentsSection extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'Estatísticas',
+              'Estatísticas de Transações',
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(color: Colors.white),
@@ -128,17 +132,24 @@ class InvestmentsSection extends StatelessWidget {
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
-              child: PieChart(
-                PieChartData(
-                  sections: pieChartSections,
-                  borderData: FlBorderData(show: false),
-                  sectionsSpace: 0,
-                  centerSpaceRadius: 40,
-                ),
-              ),
+              child: pieChartSections.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Sem dados de transações para exibir.',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    )
+                  : PieChart(
+                      PieChartData(
+                        sections: pieChartSections,
+                        borderData: FlBorderData(show: false),
+                        sectionsSpace: 0,
+                        centerSpaceRadius: 40,
+                      ),
+                    ),
             ),
             const SizedBox(height: 24),
-            _buildLegend(context),
+            _buildDynamicLegend(context, amountByCategory),
           ],
         ),
       ),
@@ -148,22 +159,25 @@ class InvestmentsSection extends StatelessWidget {
   Color _getColorForCategory(String category) {
     switch (category) {
       case 'Depósito':
-        return Colors.blue;
+        return Colors.green;
       case 'Transferência':
-        return Colors.purple;
+        return Colors.red;
       default:
         return Colors.grey;
     }
   }
 
-  Widget _buildLegend(BuildContext context) {
+  Widget _buildDynamicLegend(
+    BuildContext context,
+    Map<String, double> data,
+  ) {
     return Column(
-      children: [
-        _legendItem(Colors.blue, 'Depósito'),
-        _legendItem(Colors.purple, 'Transferência'),
-        _legendItem(Colors.orange, 'Previdência Privada'),
-        _legendItem(Colors.red, 'Bolsa de Valores'),
-      ],
+      children: data.entries.map((entry) {
+        return _legendItem(
+          _getColorForCategory(entry.key),
+          entry.key,
+        );
+      }).toList(),
     );
   }
 
