@@ -25,9 +25,13 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey =
       GlobalKey<ScaffoldState>();
+  final ScrollController _scrollController = ScrollController();
   List<Transaction> _transactions = [];
   double _balance = initialBaseBalance;
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  DocumentSnapshot? _lastDocument;
   DashboardPage _currentPage = DashboardPage.inicio;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -40,20 +44,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadData();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent) {
+        _loadMoreData();
+      }
+    });
   }
 
   @override
   void dispose() {
     _dateController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _loadData() async {
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
+      _hasMore = true;
+      _transactions.clear();
+      _lastDocument = null;
     });
 
-    Query query = _firestore.collection('transactions');
+    Query query = _firestore
+        .collection('transactions')
+        .orderBy('id', descending: true);
 
     if (_selectedCategoryFilter != null) {
       query = query.where('type', isEqualTo: _selectedCategoryFilter);
@@ -66,7 +83,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       query = query.where('date', isEqualTo: formattedDate);
     }
 
-    final snapshot = await query.get();
+    final snapshot = await query.limit(10).get();
+    if (snapshot.docs.isNotEmpty) {
+      _lastDocument = snapshot.docs.last;
+    }
+
     final transactions = snapshot.docs
         .map(
           (doc) => Transaction.fromJson(
@@ -79,6 +100,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _transactions = transactions;
       _calculateTotalBalance(transactions);
       _isLoading = false;
+      if (transactions.length < 10) {
+        _hasMore = false;
+      }
+    });
+  }
+
+  Future<void> _loadMoreData() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    Query query = _firestore
+        .collection('transactions')
+        .orderBy('id', descending: true);
+
+    if (_selectedCategoryFilter != null) {
+      query = query.where('type', isEqualTo: _selectedCategoryFilter);
+    }
+
+    if (_selectedDateFilter != null) {
+      final formattedDate = DateFormat(
+        'dd/MM/yyyy',
+      ).format(_selectedDateFilter!);
+      query = query.where('date', isEqualTo: formattedDate);
+    }
+
+    if (_lastDocument != null) {
+      query = query.startAfterDocument(_lastDocument!);
+    }
+
+    final snapshot = await query.limit(10).get();
+    if (snapshot.docs.isNotEmpty) {
+      _lastDocument = snapshot.docs.last;
+    }
+
+    final newTransactions = snapshot.docs
+        .map(
+          (doc) => Transaction.fromJson(
+            doc.data() as Map<String, dynamic>,
+          ),
+        )
+        .toList();
+
+    setState(() {
+      _transactions.addAll(newTransactions);
+      _calculateTotalBalance(_transactions);
+      _isLoadingMore = false;
+      if (newTransactions.length < 10) {
+        _hasMore = false;
+      }
     });
   }
 
@@ -262,6 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -269,6 +343,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   BalanceCard(balance: _balance),
                   const SizedBox(height: 24),
                   _buildCurrentPage(),
+                  if (_isLoadingMore)
+                    const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
                 ],
               ),
             ),
