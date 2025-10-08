@@ -162,6 +162,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             const MyCardsSection(),
             const SizedBox(height: 24),
+            FilterSection(
+              selectedCategory: _selectedCategoryFilter,
+              dateController: _dateController,
+              onCategoryChanged: (category) {
+                setState(() {
+                  _selectedCategoryFilter = category;
+                });
+                _loadData();
+              },
+              onDateChanged: (date) {
+                if (date != null) {
+                  setState(() {
+                    _selectedDateFilter = date;
+                    _dateController.text = DateFormat(
+                      'dd/MM/yyyy',
+                    ).format(date);
+                  });
+                  _loadData();
+                }
+              },
+              onFilterCleared: _clearFilters,
+            ),
+            const SizedBox(height: 24),
             StatementCard(
               transactions: _transactions,
               onDelete: _deleteTransaction,
@@ -173,6 +196,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
           key: const ValueKey('TransferenciasPage'),
           children: [
             NewTransactionForm(onAddTransaction: _addTransaction),
+            const SizedBox(height: 24),
+            FilterSection(
+              selectedCategory: _selectedCategoryFilter,
+              dateController: _dateController,
+              onCategoryChanged: (category) {
+                setState(() {
+                  _selectedCategoryFilter = category;
+                });
+                _loadData();
+              },
+              onDateChanged: (date) {
+                if (date != null) {
+                  setState(() {
+                    _selectedDateFilter = date;
+                    _dateController.text = DateFormat(
+                      'dd/MM/yyyy',
+                    ).format(date);
+                  });
+                  _loadData();
+                }
+              },
+              onFilterCleared: _clearFilters,
+            ),
             const SizedBox(height: 24),
             StatementCard(
               transactions: _transactions,
@@ -221,29 +267,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   BalanceCard(balance: _balance),
-                  const SizedBox(height: 24),
-                  FilterSection(
-                    selectedCategory: _selectedCategoryFilter,
-                    dateController: _dateController,
-                    onCategoryChanged: (category) {
-                      setState(() {
-                        _selectedCategoryFilter = category;
-                      });
-                      _loadData();
-                    },
-                    onDateChanged: (date) {
-                      if (date != null) {
-                        setState(() {
-                          _selectedDateFilter = date;
-                          _dateController.text = DateFormat(
-                            'dd/MM/yyyy',
-                          ).format(date);
-                        });
-                        _loadData();
-                      }
-                    },
-                    onFilterCleared: _clearFilters,
-                  ),
                   const SizedBox(height: 24),
                   _buildCurrentPage(),
                 ],
