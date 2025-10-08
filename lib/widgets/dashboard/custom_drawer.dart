@@ -1,7 +1,5 @@
-// lib/widgets/dashboard/custom_drawer.dart
 import 'package:flutter/material.dart';
 
-// Enum to identify pages
 enum DashboardPage { inicio, transferencias, investimentos, servicos }
 
 class CustomDrawer extends StatelessWidget {

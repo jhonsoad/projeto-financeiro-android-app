@@ -117,10 +117,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       await _auth.createUserWithEmailAndPassword(
         email: _emailController.text
-            .trim(), // use .trim() para remover espaços
+            .trim(),
         password: _passwordController.text.trim(),
       );
-      // Navega para o dashboard somente se o cadastro for bem-sucedido
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
@@ -138,7 +137,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _erroMessage = 'Ocorreu um erro. Tente novamente.';
         }
       });
-      // Mostra um Snackbar ou Dialog com a mensagem de erro
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(_erroMessage)));

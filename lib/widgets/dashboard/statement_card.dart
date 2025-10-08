@@ -1,4 +1,3 @@
-// lib/widgets/dashboard/statement_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
@@ -70,6 +69,7 @@ class StatementCard extends StatelessWidget {
                 type: transaction.type,
                 amount: finalAmount,
                 date: transaction.date,
+                proof: transaction.proof,
               );
               onEdit(updatedTransaction);
               Navigator.of(context).pop();
@@ -131,6 +131,21 @@ class StatementCard extends StatelessWidget {
           variant: ButtonVariant.danger,
         ),
       ],
+    );
+  }
+
+  void _showProofModal(BuildContext context, String proofUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Image.network(proofUrl),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -214,6 +229,15 @@ class StatementCard extends StatelessWidget {
                                 ),
                           ),
                           const Spacer(),
+                          if (item.proof != null)
+                            IconButton(
+                              onPressed: () => _showProofModal(
+                                context,
+                                item.proof!,
+                              ),
+                              icon: const Icon(Icons.receipt),
+                              tooltip: 'Ver Comprovante',
+                            ),
                           IconButton(
                             onPressed: () =>
                                 _showEditModal(context, item),
