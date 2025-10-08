@@ -3,21 +3,23 @@ class Transaction {
   final String type;
   final double amount;
   final String date;
+  final String? proof;
 
   Transaction({
     required this.id,
     required this.type,
     required this.amount,
     required this.date,
+    this.proof,
   });
 
-  // Métodos para converter para/de JSON (para salvar no shared_preferences)
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return Transaction(
       id: json['id'],
       type: json['type'],
       amount: (json['amount'] as num).toDouble(),
       date: json['date'],
+      proof: json['proof'],
     );
   }
 
@@ -27,6 +29,7 @@ class Transaction {
       'type': type,
       'amount': amount,
       'date': date,
+      'proof': proof,
     };
   }
 }

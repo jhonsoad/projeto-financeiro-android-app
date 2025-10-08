@@ -41,8 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Se você tiver uma ilustração, pode adicioná-la aqui.
-            // Ex: Image.asset('assets/images/login_image.png', height: 180),
+            // Image.asset('assets/images/login_image.png', height: 180),
             const SizedBox(height: 32),
             const Text(
               'Login',
@@ -85,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 24),
             CustomButton(
               onPressed: _login,
-              text: 'Criar conta',
+              text: 'Acessar',
               variant: ButtonVariant.primary,
               color: const Color(0xFFD95236),
             ),

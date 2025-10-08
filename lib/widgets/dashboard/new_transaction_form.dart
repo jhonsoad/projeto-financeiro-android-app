@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +9,7 @@ import '../common/custom_input.dart';
 
 class NewTransactionForm extends StatefulWidget {
   // Callback para notificar a tela principal sobre a nova transação
-  final Function(String type, double amount) onAddTransaction;
+  final Function(String type, double amount, String? proof) onAddTransaction;
 
   const NewTransactionForm({
     super.key,
@@ -28,6 +27,7 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
 
   String? _selectedTransactionType;
   String? _errorMessage;
+  File? _image;
 
   final List<DropdownMenuItem<String>> _transactionOptions = [
     const DropdownMenuItem(
@@ -40,7 +40,7 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
     ),
   ];
 
-  void _handleSubmit() {
+  void _handleSubmit() async {
     setState(() {
       _errorMessage = null;
     });
@@ -63,56 +63,31 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
         return;
       }
 
+      String? proofUrl;
+      if (_image != null) {
+        proofUrl = await _uploadImage(_image!);
+      }
+
       // Converte para negativo se for transferência
       final finalAmount = _selectedTransactionType == 'Transferência'
           ? -amount
           : amount;
 
-      widget.onAddTransaction(_selectedTransactionType!, finalAmount);
+      widget.onAddTransaction(_selectedTransactionType!, finalAmount, proofUrl);
 
       // Limpa o formulário
       _formKey.currentState?.reset();
       _valueController.clear();
       setState(() {
         _selectedTransactionType = null;
+        _image = null;
       });
       // Remove o foco para fechar o teclado
       FocusScope.of(context).unfocus();
     }
   }
 
-  final List<String> _imagesUrls = [];
-  bool _loading = false;
-
   final ImagePicker _picker = ImagePicker();
-
-  @override
-  void initState() {
-    _listImages();
-
-    super.initState();
-  }
-
-  void _listImages() async {
-    setState(() {
-      _loading = true;
-    });
-
-    final ListResult result = await FirebaseStorage.instance
-        .ref('uploads')
-        .list();
-
-    final List<String> urls = await Future.wait(
-      result.items.map((element) async {
-        return await element.getDownloadURL();
-      }),
-    );
-
-    setState(() {
-      _loading = false;
-      _imagesUrls.addAll(urls);
-    });
-  }
 
   void _pickImage() async {
     try {
@@ -120,30 +95,28 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
         source: ImageSource.camera,
       );
       if (pickedFile != null) {
-        var file = File(pickedFile.path);
-        _uploadImage(file);
+        setState(() {
+          _image = File(pickedFile.path);
+        });
       }
     } catch (e) {
       print(e);
     }
   }
 
-  void _uploadImage(File file) async {
+  Future<String?> _uploadImage(File file) async {
     try {
       String fileName = file.path.split('/').last;
 
       var storageRef = FirebaseStorage.instance.ref(
         'uploads/$fileName',
       );
-      storageRef.putFile(file);
+      await storageRef.putFile(file);
 
-      var url = await storageRef.getDownloadURL();
-      setState(() {
-        _loading = false;
-        _imagesUrls.add(url);
-      });
+      return await storageRef.getDownloadURL();
     } catch (e) {
       print(e);
+      return null;
     }
   }
 
@@ -214,6 +187,17 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
+                if (_image != null)
+                  Image.file(
+                    _image!,
+                    height: 100,
+                  ),
+                CustomButton(
+                  onPressed: _pickImage,
+                  text: 'Adicionar comprovante',
+                  variant: ButtonVariant.outline,
+                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -222,11 +206,6 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
                     text: 'Concluir transação',
                     variant: ButtonVariant.secondary,
                   ),
-                ),
-                CustomButton(
-                  onPressed: _pickImage,
-                  text: 'Adicionar comprovante',
-                  variant: ButtonVariant.danger,
                 ),
               ],
             ),

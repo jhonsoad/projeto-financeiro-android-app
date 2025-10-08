@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:intl/intl.dart';
 import '../models/transaction.dart';
-import '../utils/local_storage.dart';
 import '../widgets/dashboard/balance_card.dart';
 import '../widgets/dashboard/custom_drawer.dart';
 import '../widgets/dashboard/investments_section.dart';
@@ -26,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double _balance = initialBaseBalance;
   bool _isLoading = false;
   DashboardPage _currentPage = DashboardPage.inicio;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -34,10 +35,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadData() async {
-    final storedTransactions = await LocalStorage.loadTransactions();
     setState(() {
-      _transactions = storedTransactions;
-      _calculateTotalBalance(storedTransactions);
+      _isLoading = true;
+    });
+    final snapshot = await _firestore
+        .collection('transactions')
+        .get();
+    final transactions = snapshot.docs
+        .map((doc) => Transaction.fromJson(doc.data()))
+        .toList();
+    setState(() {
+      _transactions = transactions;
+      _calculateTotalBalance(transactions);
       _isLoading = false;
     });
   }
@@ -52,31 +61,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void _addTransaction(String type, double amount) {
+  void _addTransaction(String type, double amount, String? proof) {
     final newTransaction = Transaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       type: type,
       amount: amount,
       date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
+      proof: proof,
     );
+
+    _firestore
+        .collection('transactions')
+        .doc(newTransaction.id)
+        .set(newTransaction.toJson());
 
     setState(() {
       _transactions.insert(0, newTransaction);
     });
 
-    LocalStorage.saveTransactions(_transactions);
     _calculateTotalBalance(_transactions);
   }
 
   void _deleteTransaction(String id) {
+    _firestore.collection('transactions').doc(id).delete();
     setState(() {
       _transactions.removeWhere((tx) => tx.id == id);
     });
-    LocalStorage.saveTransactions(_transactions);
     _calculateTotalBalance(_transactions);
   }
 
   void _editTransaction(Transaction updatedTransaction) {
+    _firestore
+        .collection('transactions')
+        .doc(updatedTransaction.id)
+        .update(updatedTransaction.toJson());
     setState(() {
       final index = _transactions.indexWhere(
         (tx) => tx.id == updatedTransaction.id,
@@ -85,7 +103,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _transactions[index] = updatedTransaction;
       }
     });
-    LocalStorage.saveTransactions(_transactions);
     _calculateTotalBalance(_transactions);
   }
 
