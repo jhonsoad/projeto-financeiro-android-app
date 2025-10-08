@@ -228,7 +228,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildCurrentPage() {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1000),
       child: switch (_currentPage) {
         DashboardPage.inicio => Column(
           key: const ValueKey('InicioPage'),
@@ -300,8 +300,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        DashboardPage.investimentos => const InvestmentsSection(
-          key: ValueKey('InvestimentosPage'),
+        DashboardPage.investimentos => InvestmentsSection(
+          key: const ValueKey('InvestimentosPage'),
+          transactions: _transactions,
         ),
         DashboardPage.servicos => const ServicesSection(
           key: ValueKey('ServicosPage'),

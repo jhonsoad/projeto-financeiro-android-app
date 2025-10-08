@@ -36,6 +36,7 @@ dependencies:
   firebase_auth: ^4.19.4
   cloud_firestore: ^4.17.3
   flutter_svg: ^2.0.9
+  fl_chart: ^0.68.0
 
   # Equivalente ao LocalStorage
   shared_preferences: ^2.2.2
