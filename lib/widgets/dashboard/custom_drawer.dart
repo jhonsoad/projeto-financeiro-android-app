@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../routes.dart';
+
 enum DashboardPage { inicio, transferencias, investimentos, servicos }
 
 class CustomDrawer extends StatelessWidget {
@@ -18,7 +20,11 @@ class CustomDrawer extends StatelessWidget {
       child: Container(
         color: const Color(0xFF1E3A44), // Cor de fundo do drawer
         child: ListView(
-          padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
+          padding: const EdgeInsets.only(
+            top: 40,
+            left: 16,
+            right: 16,
+          ),
           children: [
             Align(
               alignment: Alignment.centerRight,
@@ -36,17 +42,35 @@ class CustomDrawer extends StatelessWidget {
             _buildDrawerItem(
               title: 'Transferências',
               isSelected: currentPage == DashboardPage.transferencias,
-              onTap: () => onPageSelected(DashboardPage.transferencias),
+              onTap: () =>
+                  onPageSelected(DashboardPage.transferencias),
             ),
             _buildDrawerItem(
               title: 'Investimentos',
               isSelected: currentPage == DashboardPage.investimentos,
-              onTap: () => onPageSelected(DashboardPage.investimentos),
+              onTap: () =>
+                  onPageSelected(DashboardPage.investimentos),
             ),
             _buildDrawerItem(
               title: 'Outros serviços',
               isSelected: currentPage == DashboardPage.servicos,
               onTap: () => onPageSelected(DashboardPage.servicos),
+            ),
+            const Divider(
+              color: Colors.white54,
+              thickness: 1,
+              height: 30,
+            ),
+            _buildDrawerItem(
+              title: 'Sair',
+              isSelected: false,
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  Routes.home,
+                  (route) => false,
+                );
+              },
             ),
           ],
         ),
@@ -64,7 +88,9 @@ class CustomDrawer extends StatelessWidget {
         title,
         style: TextStyle(
           color: isSelected ? const Color(0xFFD95236) : Colors.white,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontWeight: isSelected
+              ? FontWeight.bold
+              : FontWeight.normal,
           fontSize: 18,
         ),
       ),
