@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../routes.dart';
+import 'package:projeto_financeiro/routes.dart';
 
 enum DashboardPage { inicio, transferencias, investimentos, servicos }
 
@@ -35,23 +34,27 @@ class CustomDrawer extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _buildDrawerItem(
+              icon: Icons.home,
               title: 'Início',
               isSelected: currentPage == DashboardPage.inicio,
               onTap: () => onPageSelected(DashboardPage.inicio),
             ),
             _buildDrawerItem(
+              icon: Icons.swap_horiz,
               title: 'Transferências',
               isSelected: currentPage == DashboardPage.transferencias,
               onTap: () =>
                   onPageSelected(DashboardPage.transferencias),
             ),
             _buildDrawerItem(
+              icon: Icons.bar_chart,
               title: 'Investimentos',
               isSelected: currentPage == DashboardPage.investimentos,
               onTap: () =>
                   onPageSelected(DashboardPage.investimentos),
             ),
             _buildDrawerItem(
+              icon: Icons.grid_view_sharp,
               title: 'Outros serviços',
               isSelected: currentPage == DashboardPage.servicos,
               onTap: () => onPageSelected(DashboardPage.servicos),
@@ -62,6 +65,7 @@ class CustomDrawer extends StatelessWidget {
               height: 30,
             ),
             _buildDrawerItem(
+              icon: Icons.logout,
               title: 'Sair',
               isSelected: false,
               onTap: () {
@@ -79,11 +83,16 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildDrawerItem({
+    required IconData icon,
     required String title,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
     return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected ? const Color(0xFFD95236) : Colors.white,
+      ),
       title: Text(
         title,
         style: TextStyle(
