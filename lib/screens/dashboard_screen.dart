@@ -35,15 +35,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   DocumentSnapshot? _lastDocument;
   DashboardPage _currentPage = DashboardPage.inicio;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  String? _selectedCategoryFilter;
-  DateTime? _selectedDateFilter;
   final TextEditingController _dateController =
       TextEditingController();
+  String _userName = '';
+  String? _selectedCategoryFilter;
+  DateTime? _selectedDateFilter;
 
   @override
   void initState() {
     super.initState();
+    _loadUserData();
     _loadData();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
@@ -51,6 +52,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _loadMoreData();
       }
     });
+  }
+
+  Future<void> _loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (doc.exists) {
+        final fullName = doc.data()?['name'] ?? '';
+        setState(() {
+          _userName = fullName.split(' ')[0];
+        });
+      }
+    }
   }
 
   @override
@@ -337,7 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        title: const Text('Olá, Joana! :)'),
+        title: Text('Olá, $_userName! :)'),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
@@ -354,7 +371,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  BalanceCard(balance: _balance),
+                  BalanceCard(balance: _balance, userName: _userName),
                   const SizedBox(height: 24),
                   _buildCurrentPage(),
                   if (_isLoadingMore)

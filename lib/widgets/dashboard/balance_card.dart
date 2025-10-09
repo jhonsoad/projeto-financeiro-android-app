@@ -4,8 +4,13 @@ import 'package:intl/intl.dart';
 
 class BalanceCard extends StatelessWidget {
   final double balance;
+  final String userName;
 
-  const BalanceCard({super.key, required this.balance});
+  const BalanceCard({
+    super.key,
+    required this.balance,
+    required this.userName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +31,7 @@ class BalanceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Olá, Joana! :)",
+              "Olá, $userName! :)",
               style: theme.textTheme.displaySmall?.copyWith(
                 color: Colors.white,
               ),
