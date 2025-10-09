@@ -8,7 +8,8 @@ import '../common/custom_dropdown.dart';
 import '../common/custom_input.dart';
 
 class NewTransactionForm extends StatefulWidget {
-  final Function(String type, double amount, String? proof) onAddTransaction;
+  final Function(String type, double amount, String? proof)
+  onAddTransaction;
 
   const NewTransactionForm({
     super.key,
@@ -27,6 +28,7 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
   String? _selectedTransactionType;
   String? _errorMessage;
   File? _image;
+  bool _isUploading = false;
 
   final List<DropdownMenuItem<String>> _transactionOptions = [
     const DropdownMenuItem(
@@ -40,6 +42,8 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
   ];
 
   void _handleSubmit() async {
+    if (_isUploading) return;
+
     setState(() {
       _errorMessage = null;
     });
@@ -52,12 +56,17 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
     }
 
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isUploading = true;
+      });
+
       final valueText = _valueController.text.replaceAll(',', '.');
       final amount = double.tryParse(valueText);
 
       if (amount == null || amount <= 0) {
         setState(() {
           _errorMessage = 'Por favor, insira um valor válido.';
+          _isUploading = false;
         });
         return;
       }
@@ -71,13 +80,18 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
           ? -amount
           : amount;
 
-      widget.onAddTransaction(_selectedTransactionType!, finalAmount, proofUrl);
+      widget.onAddTransaction(
+        _selectedTransactionType!,
+        finalAmount,
+        proofUrl,
+      );
 
       _formKey.currentState?.reset();
       _valueController.clear();
       setState(() {
         _selectedTransactionType = null;
         _image = null;
+        _isUploading = false;
       });
       FocusScope.of(context).unfocus();
     }
@@ -184,11 +198,7 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
                   },
                 ),
                 const SizedBox(height: 16),
-                if (_image != null)
-                  Image.file(
-                    _image!,
-                    height: 100,
-                  ),
+                if (_image != null) Image.file(_image!, height: 100),
                 CustomButton(
                   onPressed: _pickImage,
                   text: 'Adicionar comprovante',
@@ -207,6 +217,13 @@ class _NewTransactionFormState extends State<NewTransactionForm> {
             ),
           ),
         ),
+        if (_isUploading)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+          ),
       ],
     );
   }

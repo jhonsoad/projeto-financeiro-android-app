@@ -1,8 +1,11 @@
-// lib/widgets/dashboard/investments_section.dart
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../models/transaction.dart';
 
 class InvestmentsSection extends StatelessWidget {
-  const InvestmentsSection({super.key});
+  final List<Transaction> transactions;
+
+  const InvestmentsSection({super.key, this.transactions = const []});
 
   @override
   Widget build(BuildContext context) {
@@ -24,38 +27,55 @@ class InvestmentsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildInvestmentCard(
-      {required BuildContext context,
-      required String title,
-      required String total,
-      required Map<String, String> items}) {
+  Widget _buildInvestmentCard({
+    required BuildContext context,
+    required String title,
+    required String total,
+    required Map<String, String> items,
+  }) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
-            Text('Total: $total', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Total: $total',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 16),
-            ...items.entries.map((entry) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                        color: const Color(0xFF2C5B6C),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(entry.key, style: const TextStyle(color: Colors.white)),
-                        Text(entry.value,
-                            style:
-                                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+            ...items.entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C5B6C),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                )),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        entry.key,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      Text(
+                        entry.value,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -63,40 +83,101 @@ class InvestmentsSection extends StatelessWidget {
   }
 
   Widget _buildStatsCard(BuildContext context) {
+    final Map<String, double> amountByCategory = {};
+    double totalAmount = 0;
+
+    for (var transaction in transactions) {
+      amountByCategory.update(
+        transaction.type,
+        (value) => value + transaction.amount.abs(),
+        ifAbsent: () => transaction.amount.abs(),
+      );
+      totalAmount += transaction.amount.abs();
+    }
+
+    final List<PieChartSectionData> pieChartSections =
+        amountByCategory.entries.map((entry) {
+          final isTouched = false;
+          final fontSize = isTouched ? 25.0 : 16.0;
+          final radius = isTouched ? 60.0 : 50.0;
+          final percentage = totalAmount > 0
+              ? (entry.value / totalAmount * 100)
+              : 0;
+
+          return PieChartSectionData(
+            color: _getColorForCategory(entry.key),
+            value: entry.value,
+            title: '${percentage.toStringAsFixed(0)}%',
+            radius: radius,
+            titleStyle: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xffffffff),
+            ),
+          );
+        }).toList();
+
     return Card(
       color: const Color(0xFF2C5B6C),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('Estatísticas',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(color: Colors.white)),
-            const SizedBox(height: 24),
-            // Placeholder for the chart
-            const CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.white,
-              child: Text('Chart'), // Replace with a real chart widget
+            Text(
+              'Estatísticas de Transações',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(color: Colors.white),
             ),
             const SizedBox(height: 24),
-            _buildLegend(context),
+            SizedBox(
+              height: 200,
+              child: pieChartSections.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Sem dados de transações para exibir.',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    )
+                  : PieChart(
+                      PieChartData(
+                        sections: pieChartSections,
+                        borderData: FlBorderData(show: false),
+                        sectionsSpace: 0,
+                        centerSpaceRadius: 40,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 24),
+            _buildDynamicLegend(context, amountByCategory),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLegend(BuildContext context) {
+  Color _getColorForCategory(String category) {
+    switch (category) {
+      case 'Depósito':
+        return Colors.green;
+      case 'Transferência':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildDynamicLegend(
+    BuildContext context,
+    Map<String, double> data,
+  ) {
     return Column(
-      children: [
-        _legendItem(Colors.blue, 'Fundos de investimento'),
-        _legendItem(Colors.purple, 'Tesouro Direto'),
-        _legendItem(Colors.orange, 'Previdência Privada'),
-        _legendItem(Colors.red, 'Bolsa de Valores'),
-      ],
+      children: data.entries.map((entry) {
+        return _legendItem(
+          _getColorForCategory(entry.key),
+          entry.key,
+        );
+      }).toList(),
     );
   }
 

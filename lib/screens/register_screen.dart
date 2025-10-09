@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto_financeiro/routes.dart';
@@ -13,12 +14,38 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TextEditingController _nameController =
+      TextEditingController();
   final TextEditingController _emailController =
       TextEditingController();
   final TextEditingController _passwordController =
       TextEditingController();
   String _erroMessage = '';
   bool _termsAccepted = false;
+  bool _isLoading = false;
+  bool _isButtonEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_validateForm);
+    _emailController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+  }
+
+  void _validateForm() {
+    final bool isFormValid =
+        _nameController.text.isNotEmpty &&
+        _emailController.text.isNotEmpty &&
+        _passwordController.text.isNotEmpty &&
+        _termsAccepted;
+    if (isFormValid != _isButtonEnabled) {
+      setState(() {
+        _isButtonEnabled = isFormValid;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,91 +62,105 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24.0,
-          vertical: 16.0,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Se você tiver uma ilustração, pode adicioná-la aqui.
-            // Ex: Image.asset('assets/images/register_image.png', height: 180),
-            const SizedBox(height: 32),
-            const Text(
-              'Preencha os campos abaixo para criar sua conta corrente!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
             ),
-            const SizedBox(height: 32),
-            const CustomInput(
-              label: 'Nome',
-              hintText: 'Digite seu nome completo',
-            ),
-            const SizedBox(height: 24),
-            CustomInput(
-              label: 'Email',
-              hintText: 'Digite seu email',
-              keyboardType: TextInputType.emailAddress,
-              controller: _emailController,
-            ),
-            const SizedBox(height: 24),
-            CustomInput(
-              label: 'Senha',
-              hintText: 'Digite sua senha',
-              obscureText: true,
-              controller: _passwordController,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Checkbox(
-                  value: _termsAccepted,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _termsAccepted = value ?? false;
-                    });
-                  },
-                ),
-                const Expanded(
-                  child: Text(
-                    'Li e estou ciente quanto às condições de tratamento dos meus dados conforme descrito na Política de Privacidade do banco.',
-                    style: TextStyle(fontSize: 14),
+                const SizedBox(height: 32),
+                const Text(
+                  'Preencha os campos abaixo para criar sua conta corrente!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
+                const SizedBox(height: 32),
+                CustomInput(
+                  label: 'Nome',
+                  hintText: 'Digite seu nome completo',
+                  controller: _nameController,
+                ),
+                const SizedBox(height: 24),
+                CustomInput(
+                  label: 'Email',
+                  hintText: 'Digite seu email',
+                  keyboardType: TextInputType.emailAddress,
+                  controller: _emailController,
+                ),
+                const SizedBox(height: 24),
+                CustomInput(
+                  label: 'Senha',
+                  hintText: 'Digite sua senha',
+                  obscureText: true,
+                  controller: _passwordController,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Checkbox(
+                      value: _termsAccepted,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _termsAccepted = value ?? false;
+                        });
+                        _validateForm();
+                      },
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Li e estou ciente quanto às condições de tratamento dos meus dados conforme descrito na Política de Privacidade do banco.',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                CustomButton(
+                  onPressed: _isButtonEnabled ? _register : () {},
+                  text: 'Criar conta',
+                  variant: ButtonVariant.primary,
+                  color: _isButtonEnabled
+                      ? const Color(0xFFD95236)
+                      : Colors.grey,
                 ),
               ],
             ),
-            const SizedBox(height: 32),
-            CustomButton(
-              onPressed: () {
-                _register();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  Routes.dashboard,
-                  (route) => false,
-                );
-              },
-              text: 'Criar conta',
-              variant: ButtonVariant.primary,
-              color: const Color(0xFFD95236),
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(child: CircularProgressIndicator()),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
   void _register() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text
-            .trim(),
-        password: _passwordController.text.trim(),
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+
+      await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({'name': _nameController.text.trim()});
+
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
@@ -147,12 +188,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(_erroMessage)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  // libera os controladores quando o widget for descartado
   @override
   void dispose() {
+    _nameController.removeListener(_validateForm);
+    _emailController.removeListener(_validateForm);
+    _passwordController.removeListener(_validateForm);
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();

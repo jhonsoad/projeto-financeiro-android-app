@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart'
     hide Transaction;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -34,15 +35,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   DocumentSnapshot? _lastDocument;
   DashboardPage _currentPage = DashboardPage.inicio;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  String? _selectedCategoryFilter;
-  DateTime? _selectedDateFilter;
   final TextEditingController _dateController =
       TextEditingController();
+  String _userName = '';
+  String? _selectedCategoryFilter;
+  DateTime? _selectedDateFilter;
 
   @override
   void initState() {
     super.initState();
+    _loadUserData();
     _loadData();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
@@ -50,6 +52,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _loadMoreData();
       }
     });
+  }
+
+  Future<void> _loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (doc.exists) {
+        final fullName = doc.data()?['name'] ?? '';
+        setState(() {
+          _userName = fullName.split(' ')[0];
+        });
+      }
+    }
   }
 
   @override
@@ -68,8 +86,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _lastDocument = null;
     });
 
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     Query query = _firestore
         .collection('transactions')
+        .where('userId', isEqualTo: user.uid)
         .orderBy('id', descending: true);
 
     if (_selectedCategoryFilter != null) {
@@ -113,8 +135,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _isLoadingMore = true;
     });
 
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     Query query = _firestore
         .collection('transactions')
+        .where('userId', isEqualTo: user.uid)
         .orderBy('id', descending: true);
 
     if (_selectedCategoryFilter != null) {
@@ -175,12 +201,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _addTransaction(String type, double amount, String? proof) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final newTransaction = Transaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       type: type,
       amount: amount,
       date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
       proof: proof,
+      userId: user.uid,
     );
 
     _firestore
@@ -228,7 +258,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildCurrentPage() {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1000),
       child: switch (_currentPage) {
         DashboardPage.inicio => Column(
           key: const ValueKey('InicioPage'),
@@ -300,8 +330,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        DashboardPage.investimentos => const InvestmentsSection(
-          key: ValueKey('InvestimentosPage'),
+        DashboardPage.investimentos => InvestmentsSection(
+          key: const ValueKey('InvestimentosPage'),
+          transactions: _transactions,
         ),
         DashboardPage.servicos => const ServicesSection(
           key: ValueKey('ServicosPage'),
@@ -323,7 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        title: const Text('Olá, Joana! :)'),
+        title: Text('Olá, $_userName! :)'),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
@@ -340,7 +371,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  BalanceCard(balance: _balance),
+                  BalanceCard(balance: _balance, userName: _userName),
                   const SizedBox(height: 24),
                   _buildCurrentPage(),
                   if (_isLoadingMore)
