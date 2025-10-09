@@ -41,7 +41,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image.asset('assets/images/login_image.png', height: 180),
             const SizedBox(height: 32),
             const Text(
               'Login',
@@ -97,8 +96,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void _login() async {
     try {
       await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
       Navigator.pushReplacementNamed(context, Routes.dashboard);
