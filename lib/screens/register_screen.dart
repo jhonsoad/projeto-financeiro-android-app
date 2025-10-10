@@ -183,7 +183,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ).showSnackBar(SnackBar(content: Text(_erroMessage)));
     } catch (e) {
       setState(() {
-        _erroMessage = e.toString();
+        _erroMessage = 'Falha ao salvar dados do usuário.';
       });
       ScaffoldMessenger.of(
         context,
