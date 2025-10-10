@@ -1,109 +1,148 @@
-ByteBank App (Projeto Financeiro Flutter)
-🎯 Sobre o Projeto
-Este repositório contém o aplicativo de gerenciamento financeiro ByteBank, desenvolvido em Flutter. O objetivo do projeto é fornecer uma experiência móvel completa para controle de finanças pessoais, integrando-se com os serviços do Firebase para autenticação e armazenamento de dados em tempo real.
+# 🚀 ByteBank - Aplicativo de Gerenciamento Financeiro
 
-A aplicação foi projetada para ser modular e escalável, utilizando o provider para um gerenciamento de estado limpo e centralizado.
+## 🎯 Sobre o Projeto
 
-✨ Funcionalidades
-As responsabilidades principais do aplicativo incluem:
+Este repositório contém um aplicativo completo de gerenciamento financeiro, o **ByteBank**, desenvolvido com Flutter. O objetivo é fornecer aos usuários uma ferramenta intuitiva e eficiente para controlar suas finanças, permitindo a visualização de saldos, o acompanhamento de transações e a realização de operações financeiras de forma simples e segura.
 
-Autenticação de Usuários: Sistema completo de cadastro e login utilizando Firebase Authentication (Email e Senha).
+A aplicação é construída de forma modular e utiliza o Firebase como backend para garantir a sincronização de dados em tempo real e uma experiência de usuário fluida.
 
-Dashboard Financeiro: Tela principal com resumo de saldo, cartões e acesso rápido às funcionalidades.
+## ✨ Funcionalidades
 
-Gerenciamento de Transações:
+* **Autenticação de Usuários:** Sistema completo de login e cadastro utilizando o Firebase Auth.
+* **Dashboard Intuitivo:** Tela principal com um resumo do saldo atual e atalhos para as principais funcionalidades.
+* **Extrato Detalhado:** Visualização de todas as transações (depósitos e transferências) agrupadas por mês.
+* **Gerenciamento de Transações:**
+    * Criação de novas transações de débito (transferência) e crédito (depósito).
+    * Upload de comprovantes para transações.
+    * Edição do valor de transações existentes.
+    * Exclusão de transações com modal de confirmação.
+* **Filtro de Transações:** Filtre o extrato por categoria ou por uma data específica.
+* **Múltiplas Seções:** Navegação via menu lateral para diferentes áreas como Início, Transferências, Investimentos e Outros Serviços.
+* **Visualização de Dados:** Gráfico de pizza na seção de investimentos para exibir estatísticas sobre as transações.
 
-Visualização de extrato detalhado com transações recentes.
+## 🏛️ Arquitetura e Tecnologias
 
-Criação de novas transações (depósito e transferência), com opção de anexar comprovantes (upload de imagem para o Firebase Storage).
+A arquitetura do projeto segue as melhores práticas de desenvolvimento com Flutter, com uma clara separação de responsabilidades entre telas, widgets, modelos e serviços.
 
-Edição e exclusão de transações existentes.
+### Tecnologias Principais Utilizadas:
 
-Filtros: Possibilidade de filtrar o extrato por categoria (tipo de transação) e por data.
+* **Flutter & Dart:** Framework e linguagem para o desenvolvimento de aplicações multiplataforma de alta performance.
+* **Firebase:** Plataforma utilizada como backend para diversas funcionalidades:
+    * **Firebase Authentication:** Para gerenciar o cadastro e login de usuários.
+    * **Cloud Firestore:** Banco de dados NoSQL para armazenar dados de usuários e transações.
+    * **Firebase Storage:** Para o armazenamento e recuperação dos comprovantes de transação.
+* **`flutter_svg`:** Biblioteca para renderizar imagens vetoriais (SVG), utilizada nos ícones da aplicação.
+* **`fl_chart`:** Para a criação de gráficos dinâmicos e interativos na seção de estatísticas.
+* **`image_picker`:** Plugin para permitir a seleção de imagens da galeria ou o uso da câmera para anexar comprovantes.
+* **`intl`:** Pacote para internacionalização e formatação de datas e valores monetários no padrão brasileiro.
+* **`shared_preferences`:** Para armazenamento local de dados simples no dispositivo.
 
-Visualização de Gráficos: Seção de investimentos com um gráfico de pizza para análise de despesas por categoria.
+## 📁 Estrutura de Pastas e Organização
 
-🏛️ Arquitetura e Tecnologias
-A arquitetura do projeto segue as melhores práticas de desenvolvimento Flutter, com uma clara separação de responsabilidades.
+A estrutura do projeto está organizada para promover a modularidade e a escalabilidade, facilitando a manutenção e o desenvolvimento de novas funcionalidades.
 
-Tecnologias Principais:
+```
+.
+├── android/            # Configurações e código específico para Android
+├── assets/             # Recursos estáticos como ícones e imagens
+│   ├── icons/
+│   └── images/
+├── ios/                # Configurações e código específico para iOS
+├── lib/                # Diretório principal com todo o código Dart da aplicação
+│   ├── models/         # Modelos de dados (ex: Transaction)
+│   ├── screens/        # Widgets que representam as telas principais
+│   ├── theme/          # Definição do tema visual da aplicação
+│   ├── utils/          # Classes utilitárias (ex: LocalStorage)
+│   ├── widgets/        # Widgets reutilizáveis da aplicação
+│   │   ├── common/     # Widgets genéricos (botões, inputs, etc.)
+│   │   ├── dashboard/  # Widgets específicos da tela de Dashboard
+│   │   └── home/       # Widgets específicos da tela Home
+│   ├── main.dart       # Ponto de entrada da aplicação
+│   └── routes.dart     # Definição das rotas de navegação
+├── test/               # Testes automatizados
+├── pubspec.yaml        # Definição de metadados e dependências do projeto
+└── README.md
+```
 
-Flutter: Framework principal para o desenvolvimento de aplicações multiplataforma (Android, iOS, Web, etc.).
+## ⚙️ Como Começar
 
-Dart: Linguagem de programação utilizada pelo Flutter.
+Para configurar e executar o projeto localmente, siga as instruções detalhadas abaixo.
 
-Firebase: Plataforma utilizada para backend as a service:
+### Pré-requisitos
 
-Firebase Authentication: Para cadastro e login de usuários.
+* **Flutter SDK:** Certifique-se de ter o Flutter instalado. Você pode seguir o [guia oficial de instalação](https://docs.flutter.dev/get-started/install).
+* **Um editor de código:** VS Code, Android Studio ou IntelliJ.
+* **Um emulador ou dispositivo físico:** Um emulador Android/iOS ou um dispositivo conectado para executar o app.
 
-Cloud Firestore: Como banco de dados NoSQL em tempo real para armazenar transações.
+### Instalação
 
-Firebase Storage: Para armazenamento de arquivos, como comprovantes de transações.
+1.  **Clone o repositório:**
+    ```bash
+    git clone [https://github.com/jhonsoad/projeto-financeiro-android-app.git](https://github.com/jhonsoad/projeto-financeiro-android-app.git)
+    ```
 
-Provider: Para gerenciamento de estado declarativo e centralizado.
+2.  **Navegue até o diretório do projeto:**
+    ```bash
+    cd projeto-financeiro-android-app
+    ```
 
-intl: Para formatação de datas e valores monetários.
+3.  **Instale as dependências:**
+    ```bash
+    flutter pub get
+    ```
 
-fl_chart: Para a criação de gráficos dinâmicos na seção de investimentos.
+### Configuração do Firebase (Instruções para Avaliação)
 
-⚙️ Como Começar
-Siga estas instruções para configurar e executar o projeto localmente.
+Para que o aplicativo funcione, é necessário conectá-lo a um projeto Firebase. Como os arquivos de configuração contêm chaves de acesso, você precisará criar um projeto gratuito no Firebase para gerar seus próprios arquivos.
 
-Pré-requisitos
-Flutter SDK: Guia de instalação do Flutter
+Siga os passos abaixo:
 
-Um editor de código: VS Code (com a extensão do Flutter) ou Android Studio.
+#### Parte 1: Criar o Projeto no Firebase
 
-Um emulador Android/iOS ou um dispositivo físico.
+1.  Acesse o [console do Firebase](https://console.firebase.google.com/) com uma conta Google.
+2.  Clique em **"Adicionar projeto"** ou **"Criar um projeto"**.
+3.  Dê um nome ao projeto (ex: `AvaliacaoByteBank`) e aceite os termos.
+4.  Você pode desativar o Google Analytics para este projeto para simplificar a configuração.
+5.  Clique em **"Criar projeto"** e aguarde a finalização.
 
-Instalação
-Clone este repositório:
+#### Parte 2: Configurar para Android
 
-Bash
+1.  Na tela principal do seu novo projeto Firebase, clique no ícone do **Android** (`</>`).
+2.  No campo **"Nome do pacote Android"**, insira exatamente: `com.example.projeto_financeiro_app_flutter`.
+3.  Os outros campos são opcionais. Clique em **"Registrar app"**.
+4.  Na etapa seguinte, clique em **"Fazer o download do google-services.json"** para baixar o arquivo de configuração.
+5.  **Mova o arquivo `google-services.json` que você baixou para a pasta `android/app/`** na raiz do projeto que você clonou. Se já existir um arquivo com esse nome, substitua-o.
+6.  Clique em **"Próxima"** e, em seguida, em **"Continuar no console"**. Você pode ignorar as outras instruções, pois o projeto já está configurado para usar o SDK do Firebase.
 
-git clone <url-do-seu-repositorio>
-Navegue até o diretório do projeto:
+#### Parte 3: Ativar os Serviços no Firebase
 
-Bash
+Para que o login e o armazenamento de dados funcionem, você precisa ativar os seguintes serviços:
 
-cd projeto-financeiro-android-app
-Instale as dependências:
+1.  **Authentication:**
+    * No menu à esquerda, vá para **Build > Authentication**.
+    * Clique em **"Primeiros passos"**.
+    * Selecione **"E-mail/senha"** na lista de provedores e ative-o.
 
-Bash
+2.  **Cloud Firestore (Banco de Dados):**
+    * No menu, vá para **Build > Cloud Firestore**.
+    * Clique em **"Criar banco de dados"**.
+    * Selecione **"Iniciar em modo de teste"** (isso permite leitura e escrita sem regras de segurança complexas, ideal para avaliação).
+    * Escolha um local para o servidor (pode manter o padrão) e clique em **"Ativar"**.
 
-flutter pub get
-Configuração do Firebase
-Para que o aplicativo se conecte ao seu projeto Firebase, é necessário adicionar os arquivos de configuração.
+3.  **Storage (Armazenamento de Arquivos):**
+    * No menu, vá para **Build > Storage**.
+    * Clique em **"Primeiros passos"**.
+    * Selecione **"Iniciar em modo de teste"** para as regras de segurança.
+    * Clique em **"Concluído"**.
 
-Crie um projeto no Firebase Console.
+Após seguir todos esses passos, o projeto estará pronto para ser executado.
 
-Adicione um aplicativo Android e um aplicativo iOS ao seu projeto Firebase.
+### Como Executar
 
-Siga as instruções para baixar os arquivos de configuração:
+1.  Certifique-se de que um emulador esteja rodando ou que um dispositivo físico esteja conectado.
+2.  Execute o seguinte comando no terminal na raiz do projeto:
+    ```bash
+    flutter run
+    ```
 
-Para Android:
-
-Baixe o arquivo google-services.json.
-
-Coloque este arquivo no diretório android/app/.
-
-Para iOS:
-
-Baixe o arquivo GoogleService-Info.plist.
-
-Abra o diretório ios/Runner.xcworkspace no Xcode e arraste o arquivo GoogleService-Info.plist para dentro da pasta Runner (certifique-se de que a opção "Copy items if needed" esteja marcada).
-
-No console do Firebase, ative os seguintes serviços:
-
-Authentication: Vá para a aba "Authentication", clique em "Get Started" e ative o provedor de "E-mail/senha".
-
-Firestore Database: Vá para a aba "Firestore Database", clique em "Criar banco de dados" e inicie no modo de teste.
-
-Storage: Vá para a aba "Storage", clique em "Get Started" e siga as instruções, mantendo as regras de segurança padrão para desenvolvimento.
-
-Como Executar
-Após a instalação e configuração, execute o seguinte comando para iniciar o aplicativo em seu emulador ou dispositivo conectado:
-
-Bash
-
-flutter run
+A aplicação será compilada e iniciada no dispositivo/emulador selecionado.
