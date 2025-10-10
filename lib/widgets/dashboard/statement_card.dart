@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../providers/transaction_provider.dart';
 import '../../models/transaction.dart';
 import '../common/custom_button.dart';
 import '../common/custom_input.dart';
 import '../common/custom_modal.dart';
 
 class StatementCard extends StatelessWidget {
-  final List<Transaction> transactions;
-  final Function(String id) onDelete;
-  final Function(Transaction transaction) onEdit;
-
-  const StatementCard({
-    super.key,
-    required this.transactions,
-    required this.onDelete,
-    required this.onEdit,
-  });
+  const StatementCard({super.key});
 
   String _getMonthName(String dateString, BuildContext context) {
     try {
@@ -70,8 +63,11 @@ class StatementCard extends StatelessWidget {
                 amount: finalAmount,
                 date: transaction.date,
                 proof: transaction.proof,
+                userId: transaction.userId,
               );
-              onEdit(updatedTransaction);
+              context.read<TransactionProvider>().editTransaction(
+                updatedTransaction,
+              );
               Navigator.of(context).pop();
             }
           },
@@ -124,7 +120,9 @@ class StatementCard extends StatelessWidget {
         ),
         CustomButton(
           onPressed: () {
-            onDelete(transaction.id);
+            context.read<TransactionProvider>().deleteTransaction(
+              transaction.id,
+            );
             Navigator.of(context).pop();
           },
           text: 'Excluir',
@@ -156,6 +154,8 @@ class StatementCard extends StatelessWidget {
       locale: 'pt_BR',
       symbol: 'R\$',
     );
+    final transactionProvider = context.watch<TransactionProvider>();
+    final transactions = transactionProvider.transactions;
 
     return Card(
       color: theme.colorScheme.surface,

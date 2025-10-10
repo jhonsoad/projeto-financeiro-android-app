@@ -6,6 +6,8 @@ import 'package:projeto_financeiro/screens/home_screen.dart';
 import 'package:projeto_financeiro/screens/login_screen.dart';
 import 'package:projeto_financeiro/screens/register_screen.dart';
 import 'package:projeto_financeiro/theme/app_theme.dart';
+import 'providers/transaction_provider.dart';
+import 'package:provider/provider.dart';
 import 'routes.dart';
 
 Future<void> main() async {
@@ -15,7 +17,12 @@ Future<void> main() async {
     'pt_BR',
     null,
   ); // inicializa dados de formatacao
-  runApp(const MyApp());
+    runApp(
+    ChangeNotifierProvider(
+      create: (context) => TransactionProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
